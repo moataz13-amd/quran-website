@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en" dir="rtl">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Quran Oasis</title>
+    <meta name="description" content="Peaceful Quran reading and listening experience with beautiful Islamic design." />
+    <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+    <div id="app" class="app">
+        <header class="top-header">
+            <div class="brand">
+                <div class="brand-mark"></div>
+                <div>
+                    <div class="brand-title">Quran Oasis</div>
+                    <div class="brand-subtitle">A calm space for Quran recitation</div>
+                </div>
+            </div>
+            <nav class="main-nav" aria-label="Main navigation">
+                <button class="nav-link" data-target="quran-reader-section">المصحف</button>
+                <button class="nav-link" data-target="quran-audio-section">الاستماع</button>
+                <button class="nav-link" data-target="reciters-section">القراء</button>
+            </nav>
+            <div class="header-actions">
+                <button id="toggle-theme" class="icon-button" aria-label="Toggle night mode">🌙</button>
+            </div>
+        </header>
+
+        <main class="main-layout">
+            <aside class="side-panel" aria-label="Surah selection">
+                <div class="panel-header">الفهرس</div>
+                <input id="surah-search" class="search-input" type="search" placeholder="ابحث عن سورة" aria-label="Search Surah" />
+                <ul id="surah-list" class="surah-list" tabindex="0" aria-label="Surah list"></ul>
+            </aside>
+
+            <section class="content-area">
+                <!-- Quran Reader -->
+                <section id="quran-reader-section" class="card quran-reader" aria-label="Quran reader">
+                    <header class="card-header">
+                        <div>
+                            <h1 class="card-title">المصحف</h1>
+                            <p class="card-subtitle">اقرأ بتدبر في واجهة هادئة مستوحاة من الفن الإسلامي</p>
+                        </div>
+                        <div class="control-row">
+                            <label class="switch">
+                <input type="checkbox" id="toggle-translation" />
+                <span class="slider" aria-hidden="true"></span>
+                <span class="switch-label">عرض الترجمة (EN)</span>
+              </label>
+                        </div>
+                    </header>
+
+                    <div class="ayah-toolbar" aria-label="Ayah navigation">
+                        <div class="toolbar-group">
+                            <label>
+                سورة
+                <select id="surah-select"></select>
+              </label>
+                            <label>
+                آية
+                <select id="ayah-select"></select>
+              </label>
+                            <button id="go-to-ayah" class="primary-button">اذهب</button>
+                        </div>
+                    </div>
+
+                    <div id="quran-scroll-container" class="quran-scroll" tabindex="0">
+                        <div id="quran-text" class="quran-text" aria-live="polite"></div>
+                    </div>
+                </section>
+
+                <!-- Quran Audio -->
+                <section id="quran-audio-section" class="card quran-audio" aria-label="Quran audio player">
+                    <header class="card-header">
+                        <div>
+                            <h2 class="card-title">الاستماع للقرآن</h2>
+                            <p class="card-subtitle">اختر القارئ والسورة واستمع بتجربة سلسة</p>
+                        </div>
+                    </header>
+
+                    <div class="audio-layout">
+                        <div class="audio-controls-panel">
+                            <label>
+                القارئ
+                <select id="reciter-select"></select>
+              </label>
+                            <label>
+                السورة
+                <select id="audio-surah-select"></select>
+              </label>
+                            <button id="play-audio" class="primary-button">تشغيل</button>
+                            <a id="download-audio" class="secondary-button" href="#" download>تحميل MP3</a>
+
+                            <div class="playback-row" aria-label="Playback controls">
+                                <button id="audio-play-pause" class="icon-button" aria-label="Play or pause audio">⏵</button>
+                                <input type="range" id="audio-progress" min="0" max="100" value="0" aria-label="Audio progress" />
+                                <span id="audio-time" class="time-label">0:00 / 0:00</span>
+                            </div>
+
+                            <label class="playback-speed">
+                سرعة التشغيل
+                <select id="playback-rate">
+                  <option value="0.75">0.75x</option>
+                  <option value="1" selected>1x</option>
+                  <option value="1.25">1.25x</option>
+                  <option value="1.5">1.5x</option>
+                  <option value="2">2x</option>
+                </select>
+              </label>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Reciters -->
+                <section id="reciters-section" class="card reciters" aria-label="Reciters profiles">
+                    <header class="card-header">
+                        <div>
+                            <h2 class="card-title">القراء</h2>
+                            <p class="card-subtitle">تعرف على أبرز قراء القرآن الكريم</p>
+                        </div>
+                        <div class="control-row">
+                            <input id="reciter-search" class="search-input" type="search" placeholder="ابحث عن قارئ" aria-label="Search reciter" />
+                        </div>
+                    </header>
+
+                    <div id="reciters-grid" class="reciters-grid" aria-live="polite"></div>
+                </section>
+            </section>
+        </main>
+
+        <footer class="site-footer">
+            <div class="footer-pattern"></div>
+            <p>بني هذا الموقع باستخدام واجهات برمجة قرآن كريم عامة. نسأل الله القبول.</p>
+        </footer>
+    </div>
+
+    <dialog id="reciter-modal" class="reciter-modal" aria-label="Reciter details">
+        <div class="reciter-modal-inner">
+            <header class="reciter-modal-header">
+                <div>
+                    <div id="reciter-modal-name" class="reciter-modal-name"></div>
+                    <div id="reciter-modal-meta" class="reciter-modal-meta"></div>
+                </div>
+                <button id="reciter-modal-close" class="icon-button" aria-label="Close reciter details">✕</button>
+            </header>
+
+            <div class="reciter-modal-actions">
+                <input id="reciter-modal-surah-search" class="search-input" type="search" placeholder="ابحث عن سورة" aria-label="Search surah in reciter modal" />
+            </div>
+
+            <div id="reciter-modal-player" class="reciter-modal-player" aria-label="Reciter modal audio player">
+                <div id="reciter-modal-now-playing" class="reciter-modal-now-playing"></div>
+                <div class="reciter-modal-player-controls">
+                    <button id="reciter-modal-play-pause" class="icon-button" aria-label="Play or pause reciter audio">⏵</button>
+                    <input type="range" id="reciter-modal-progress" min="0" max="100" value="0" aria-label="Reciter modal audio progress" />
+                    <span id="reciter-modal-time" class="time-label">0:00 / 0:00</span>
+                    <select id="reciter-modal-rate" class="reciter-modal-rate" aria-label="Playback speed">
+                        <option value="0.75">0.75x</option>
+                        <option value="1" selected>1x</option>
+                        <option value="1.25">1.25x</option>
+                        <option value="1.5">1.5x</option>
+                        <option value="2">2x</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="reciter-modal-surahs" class="reciter-modal-surahs" aria-live="polite"></div>
+        </div>
+    </dialog>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
