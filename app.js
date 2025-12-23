@@ -11,6 +11,8 @@ const state = {
     currentReciter: null,
     audio: new Audio(),
     audioReady: false,
+    recitersMobileExpanded: false,
+    recitersMobileExpandedBySearch: false,
 };
 
 const els = {};
@@ -24,6 +26,7 @@ function initRefs() {
     els.surahSearch = qs("surah-search");
     els.surahSelect = qs("surah-select");
     els.ayahSelect = qs("ayah-select");
+
     els.quranText = qs("quran-text");
     els.quranScroll = qs("quran-scroll-container");
     els.toggleTranslation = qs("toggle-translation");
@@ -41,6 +44,7 @@ function initRefs() {
 
     els.reciterSearch = qs("reciter-search");
     els.recitersGrid = qs("reciters-grid");
+    els.recitersToggle = qs("reciters-toggle");
 
     els.reciterModal = qs("reciter-modal");
     els.reciterModalName = qs("reciter-modal-name");
@@ -55,6 +59,57 @@ function initRefs() {
     els.reciterModalProgress = qs("reciter-modal-progress");
     els.reciterModalTime = qs("reciter-modal-time");
     els.reciterModalRate = qs("reciter-modal-rate");
+}
+
+const featuredReciterIds = [54, 102, 4, 123, 51, 5, 106, 112, 62, 35, 92, 93];
+
+function isMobileRecitersLayout() {
+    return !!(window.matchMedia && window.matchMedia("(max-width: 720px)").matches);
+}
+
+function getRecitersForDisplay() {
+    const isMobile = isMobileRecitersLayout();
+    if (!isMobile) return state.reciters;
+
+    const expanded = !!(state.recitersMobileExpanded || state.recitersMobileExpandedBySearch);
+    if (expanded) return state.reciters;
+
+    const idToReciter = new Map();
+    state.reciters.forEach((r) => idToReciter.set(r.id, r));
+
+    const featured = featuredReciterIds
+        .map((id) => idToReciter.get(id))
+        .filter(Boolean);
+
+    if (featured.length) return featured;
+    return state.reciters.slice(0, 12);
+}
+
+function updateRecitersToggleUI() {
+    if (!els.recitersToggle) return;
+
+    const isMobile = isMobileRecitersLayout();
+    if (!isMobile) {
+        els.recitersToggle.style.display = "none";
+        return;
+    }
+
+    const expanded = !!(state.recitersMobileExpanded || state.recitersMobileExpandedBySearch);
+    const shown = getRecitersForDisplay().length;
+    const hasMore = state.reciters.length > shown;
+
+    els.recitersToggle.style.display = hasMore || expanded ? "inline-flex" : "none";
+    els.recitersToggle.textContent = expanded ? "عرض أقل" : "رؤية المزيد";
+}
+
+function applyReciterSearchFilter() {
+    if (!els.reciterSearch || !els.recitersGrid) return;
+    const q = els.reciterSearch.value.trim().toLowerCase();
+    Array.from(els.recitersGrid.children).forEach((card) => {
+        const name = card.querySelector(".reciter-name").textContent.toLowerCase();
+        const bio = card.querySelector(".reciter-bio").textContent.toLowerCase();
+        card.style.display = name.includes(q) || bio.includes(q) ? "flex" : "none";
+    });
 }
 
 async function fetchJSON(url) {
@@ -253,7 +308,8 @@ function renderReciterSelect() {
 
 function renderRecitersGrid() {
     els.recitersGrid.innerHTML = "";
-    state.reciters.forEach((r) => {
+    const reciters = getRecitersForDisplay();
+    reciters.forEach((r) => {
         const card = document.createElement("article");
         card.className = "reciter-card";
         card.tabIndex = 0;
@@ -273,7 +329,7 @@ function renderRecitersGrid() {
           <div class="reciter-bio">${r.rewaya || "قارئ من القراء المعتمدين في موقع MP3 Quran"}</div>
         </div>
       </div>
-      <p class="reciter-bio">${r.moshaf?.[0]?.name || "تسجيلات كاملة للقرآن الكريم بعدة روايات"}</p>
+      <p class="reciter-bio">${(r.moshaf && r.moshaf[0] && r.moshaf[0].name) || "تسجيلات كاملة للقرآن الكريم بعدة روايات"}</p>
     `;
 
         card.addEventListener("click", () => openReciterModal(r));
@@ -286,16 +342,18 @@ function renderRecitersGrid() {
 
         els.recitersGrid.appendChild(card);
     });
+
+    updateRecitersToggleUI();
+    applyReciterSearchFilter();
 }
 
 function setupRecitersInteractions() {
     els.reciterSearch.addEventListener("input", () => {
         const q = els.reciterSearch.value.trim().toLowerCase();
-        Array.from(els.recitersGrid.children).forEach((card) => {
-            const name = card.querySelector(".reciter-name").textContent.toLowerCase();
-            const bio = card.querySelector(".reciter-bio").textContent.toLowerCase();
-            card.style.display = name.includes(q) || bio.includes(q) ? "flex" : "none";
-        });
+        const isMobile = isMobileRecitersLayout();
+        state.recitersMobileExpandedBySearch = isMobile && !!q;
+        if (!q) state.recitersMobileExpandedBySearch = false;
+        renderRecitersGrid();
     });
 
     els.reciterSearch.addEventListener("keydown", (e) => {
@@ -306,6 +364,30 @@ function setupRecitersInteractions() {
         const match = state.reciters.find((r) => r.name.toLowerCase().includes(q));
         if (match) openReciterModal(match);
     });
+
+    if (els.recitersToggle) {
+        els.recitersToggle.addEventListener("click", () => {
+            const expanded = !!(state.recitersMobileExpanded || state.recitersMobileExpandedBySearch);
+            if (expanded) {
+                state.recitersMobileExpanded = false;
+                state.recitersMobileExpandedBySearch = false;
+                if (els.reciterSearch) els.reciterSearch.value = "";
+            } else {
+                state.recitersMobileExpanded = true;
+            }
+            renderRecitersGrid();
+        });
+    }
+
+    if (window.matchMedia) {
+        const mq = window.matchMedia("(max-width: 720px)");
+        if (mq && typeof mq.addEventListener === "function") {
+            mq.addEventListener("change", () => {
+                state.recitersMobileExpandedBySearch = false;
+                renderRecitersGrid();
+            });
+        }
+    }
 
     els.reciterSelect.addEventListener("change", () => {
         const id = parseInt(els.reciterSelect.value, 10);
