@@ -976,14 +976,23 @@ body.light-theme .reciters-toggle {
         padding: 14px 14px 10px;
     }
     .top-header {
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
         border-radius: 22px;
-        align-items: flex-start;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 14px;
     }
     .main-nav {
-        order: 3;
-        width: 100%;
+        margin-inline-start: 0;
+        flex: 1;
         justify-content: center;
+        flex-wrap: nowrap;
+        gap: 6px;
+        overflow-x: auto;
+        overscroll-behavior-x: contain;
+    }
+    .main-nav::-webkit-scrollbar {
+        height: 0;
     }
     .main-layout {
         grid-template-columns: minmax(0, 1fr);
@@ -1000,6 +1009,13 @@ body.light-theme .reciters-toggle {
     .card-header {
         flex-direction: column;
         align-items: flex-start;
+    }
+    .brand-subtitle {
+        display: none;
+    }
+    .nav-link {
+        padding: 7px 14px;
+        font-size: 13px;
     }
     .app {
         margin: 0;
