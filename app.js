@@ -260,7 +260,9 @@ async function loadSurahText(index) {
     els.quranText.innerHTML = "";
     els.ayahSelect.innerHTML = "";
 
-    if (surah.number !== 9) {
+    const showStandaloneBasmala = surah.number !== 9 && surah.number !== 1;
+
+    if (showStandaloneBasmala) {
         const basmala = document.createElement("div");
         basmala.className = "basmala";
         basmala.textContent = "بِسْمِ ٱللَّٰهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ";
@@ -268,7 +270,7 @@ async function loadSurahText(index) {
     }
 
     let startAyahIndex = 0;
-    if (surah.number !== 9 && arabicAyahs[0] && arabicAyahs[0].text) {
+    if (showStandaloneBasmala && arabicAyahs[0] && arabicAyahs[0].text) {
         const firstStripped = stripBasmalaPrefix(arabicAyahs[0].text);
         if (firstStripped !== arabicAyahs[0].text && !firstStripped) {
             startAyahIndex = 1;
@@ -286,7 +288,7 @@ async function loadSurahText(index) {
         const numberSpan = `<span class="ayah-number">﴿${displayNumber}﴾</span>`;
         const transText = (transAyahs[i] && transAyahs[i].text) || "";
 
-        const ayahText = displayIndex === 0 ? stripBasmalaPrefix(ayah.text) : ayah.text;
+        const ayahText = displayIndex === 0 && showStandaloneBasmala ? stripBasmalaPrefix(ayah.text) : ayah.text;
         cont.innerHTML = `${ayahText} ${numberSpan}`;
 
         if (state.showTranslation) {
