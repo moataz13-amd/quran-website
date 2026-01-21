@@ -211,7 +211,7 @@ function renderSurahList() {
       <div class="surah-item-number">${s.number}</div>
       <div class="surah-item-meta">
         <div class="surah-item-name">${s.name}</div>
-        <div class="surah-item-info">${s.englishName} • ${s.ayahs || s.numberOfAyahs} آية</div>
+        <div class="surah-item-info"><span class="surah-item-en" dir="ltr">${s.englishName}</span> • ${s.ayahs || s.numberOfAyahs} آية</div>
       </div>
     `;
 
@@ -234,7 +234,8 @@ function renderSurahDropdowns() {
     state.surahs.forEach((s, idx) => {
         const opt = document.createElement("option");
         opt.value = idx;
-        opt.textContent = `${s.number}. ${s.englishName}`;
+        const en = `\u2066${s.englishName}\u2069`;
+        opt.textContent = `${s.number}. ${s.name} - ${en}`;
         els.surahSelect.appendChild(opt);
 
         const opt2 = opt.cloneNode(true);
@@ -506,6 +507,7 @@ function getAudioUrlForReciterSurah(reciter, surahNumber) {
 }
 
 async function playSurahForReciter(reciter, surahIndex) {
+    if (!reciter) return;
     const surah = state.surahs[surahIndex];
     if (!surah) return;
 
@@ -538,7 +540,7 @@ async function playSurahForReciter(reciter, surahIndex) {
     els.downloadAudio.download = `surah-${surah.number}-${reciter.name}.mp3`;
 
     if (els.reciterModalNowPlaying) {
-        els.reciterModalNowPlaying.textContent = `${reciter.name} • ${surah.number}. ${surah.name}`;
+        els.reciterModalNowPlaying.textContent = `${reciter.name} • ${surah.number}. ${surah.name} • ${surah.englishName}`;
     }
 }
 
@@ -556,7 +558,7 @@ function renderReciterModalSurahs(reciter) {
         title.className = "modal-surah-title";
         title.innerHTML = `
       <div class="modal-surah-name">${s.number}. ${s.name}</div>
-      <div class="modal-surah-sub">${s.englishName} • ${s.numberOfAyahs} آية</div>
+      <div class="modal-surah-sub"><span class="modal-surah-en" dir="ltr">${s.englishName}</span> • ${s.numberOfAyahs} آية</div>
     `;
 
         const actions = document.createElement("div");
