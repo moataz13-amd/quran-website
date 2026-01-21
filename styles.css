@@ -646,8 +646,13 @@ body.light-theme .audio-controls-panel select {
     gap: 8px;
 }
 
+.audio-controls-panel .playback-row {
+    grid-column: 1 / -1;
+}
+
 #audio-progress {
     flex: 1;
+    min-width: 0;
 }
 
 #audio-progress[type="range"] {
@@ -674,6 +679,16 @@ body.light-theme #audio-progress[type="range"] {
 .time-label {
     font-size: 11px;
     color: var(--text-soft);
+    white-space: nowrap;
+}
+
+.playback-speed {
+    display: flex;
+    flex-direction: column;
+}
+
+.audio-controls-panel .playback-speed {
+    grid-column: 1 / -1;
 }
 
 .playback-speed select {
@@ -860,6 +875,7 @@ body.light-theme .reciter-modal-player {
 
 #reciter-modal-progress {
     flex: 1;
+    min-width: 0;
 }
 
 #reciter-modal-progress[type="range"] {

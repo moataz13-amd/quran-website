@@ -458,7 +458,6 @@ function setupRecitersInteractions() {
 
 function getAudioUrlForReciterSurah(reciter, surahNumber) {
     const moshaf = reciter && reciter.moshaf && reciter.moshaf[0];
-    if (!moshaf || !moshaf.server) return null;
     const padded = surahNumber.toString().padStart(3, "0");
     return `${moshaf.server}${padded}.mp3`;
 }
@@ -474,6 +473,12 @@ async function playSurahForReciter(reciter, surahIndex) {
     const url = getAudioUrlForReciterSurah(reciter, surah.number);
     if (!url) return;
 
+    try {
+        state.audio.pause();
+    } catch {}
+    state.audio.currentTime = 0;
+    state.audio.src = "";
+    state.audio.load();
     state.audio.src = url;
     state.audioReady = true;
     const rate = (els.reciterModalRate && parseFloat(els.reciterModalRate.value)) || parseFloat(els.playbackRate.value) || 1;
@@ -487,122 +492,6 @@ async function playSurahForReciter(reciter, surahIndex) {
     if (els.reciterModalNowPlaying) {
         els.reciterModalNowPlaying.textContent = `${reciter.name} • ${surah.number}. ${surah.name}`;
     }
-}
-
-function renderReciterModalSurahs(reciter) {
-    els.reciterModalSurahs.innerHTML = "";
-    state.surahs.forEach((s, idx) => {
-        const row = document.createElement("div");
-        row.className = "modal-surah-row";
-        row.dataset.query = `${s.name} ${s.englishName}`.toLowerCase();
-
-        const title = document.createElement("div");
-        title.className = "modal-surah-title";
-        title.innerHTML = `
-      <div class="modal-surah-name">${s.number}. ${s.name}</div>
-      <div class="modal-surah-sub">${s.englishName} • ${s.numberOfAyahs} آية</div>
-    `;
-
-        const actions = document.createElement("div");
-        actions.className = "modal-surah-actions";
-
-        const playBtn = document.createElement("button");
-        playBtn.className = "primary-button";
-        playBtn.textContent = "تشغيل";
-        playBtn.addEventListener("click", () => {
-            playSurahForReciter(reciter, idx).catch(console.error);
-        });
-
-        const downloadLink = document.createElement("a");
-        downloadLink.className = "secondary-button";
-        downloadLink.textContent = "تحميل";
-        const url = getAudioUrlForReciterSurah(reciter, s.number);
-        downloadLink.href = url || "#";
-        downloadLink.download = `surah-${s.number}-${reciter.name}.mp3`;
-        downloadLink.setAttribute("role", "button");
-
-        actions.appendChild(playBtn);
-        actions.appendChild(downloadLink);
-
-        row.appendChild(title);
-        row.appendChild(actions);
-
-        els.reciterModalSurahs.appendChild(row);
-    });
-}
-
-function openReciterModal(reciter) {
-    if (!els.reciterModal) return;
-
-    els.reciterModalName.textContent = reciter.name;
-    const moshafName = (reciter.moshaf && reciter.moshaf[0] && reciter.moshaf[0].name) || "";
-    els.reciterModalMeta.textContent = `${reciter.rewaya || ""}${reciter.rewaya && moshafName ? " • " : ""}${moshafName}`.trim();
-
-    renderReciterModalSurahs(reciter);
-    els.reciterModalSurahSearch.value = "";
-
-    if (els.reciterModalNowPlaying) {
-        els.reciterModalNowPlaying.textContent = reciter.name;
-    }
-
-    if (typeof els.reciterModal.showModal === "function") {
-        els.reciterModal.showModal();
-    } else {
-        els.reciterModal.setAttribute("open", "");
-    }
-
-    els.reciterModalSurahSearch.focus();
-    syncAllPlayerUIs();
-}
-
-function closeReciterModal() {
-    if (!els.reciterModal) return;
-    if (typeof els.reciterModal.close === "function") {
-        els.reciterModal.close();
-    } else {
-        els.reciterModal.removeAttribute("open");
-    }
-}
-
-function setupReciterModal() {
-    if (!els.reciterModal) return;
-
-    els.reciterModalClose.addEventListener("click", closeReciterModal);
-
-    els.reciterModal.addEventListener("click", (e) => {
-        if (e.target === els.reciterModal) closeReciterModal();
-    });
-
-    els.reciterModalSurahSearch.addEventListener("input", () => {
-        const q = els.reciterModalSurahSearch.value.trim().toLowerCase();
-        Array.from(els.reciterModalSurahs.children).forEach((row) => {
-            const match = (row.dataset.query || "").includes(q);
-            row.style.display = match ? "flex" : "none";
-        });
-    });
-
-    els.reciterModalPlayPause.addEventListener("click", () => {
-        if (!state.audioReady) return;
-        if (state.audio.paused) {
-            state.audio.play();
-        } else {
-            state.audio.pause();
-        }
-        syncAllPlayerUIs();
-    });
-
-    els.reciterModalProgress.addEventListener("input", () => {
-        if (!state.audio.duration) return;
-        const pct = parseFloat(els.reciterModalProgress.value) || 0;
-        state.audio.currentTime = (pct / 100) * state.audio.duration;
-        syncAllPlayerUIs();
-    });
-
-    els.reciterModalRate.addEventListener("change", () => {
-        const rate = parseFloat(els.reciterModalRate.value) || 1;
-        state.audio.playbackRate = rate;
-        if (els.playbackRate) els.playbackRate.value = String(rate);
-    });
 }
 
 function setupAudioPlayer() {
@@ -629,7 +518,10 @@ function setupAudioPlayer() {
     });
 
     els.audioPlayPause.addEventListener("click", () => {
-        if (!state.audioReady) return;
+        if (!state.audioReady) {
+            prepareAndPlaySelectedAudio().catch(console.error);
+            return;
+        }
         if (audio.paused) {
             audio.play();
         } else {
@@ -653,7 +545,7 @@ function syncAllPlayerUIs() {
     }
 
     if (duration && isFinite(duration)) {
-        const pct = (currentTime / duration) * 100;
+        const pct = Math.min(100, Math.max(0, (currentTime / duration) * 100));
         if (els.audioProgress) els.audioProgress.value = pct || 0;
         if (els.reciterModalProgress) els.reciterModalProgress.value = pct || 0;
     } else {
@@ -662,8 +554,8 @@ function syncAllPlayerUIs() {
     }
 
     const playing = isReady && !audio.paused;
-    if (els.audioPlayPause) els.audioPlayPause.textContent = playing ? "⏸" : "⏵";
-    if (els.reciterModalPlayPause) els.reciterModalPlayPause.textContent = playing ? "⏸" : "⏵";
+    if (els.audioPlayPause) els.audioPlayPause.textContent = playing ? "❚❚" : "▶";
+    if (els.reciterModalPlayPause) els.reciterModalPlayPause.textContent = playing ? "❚❚" : "▶";
 }
 
 function formatTime(sec) {
@@ -684,7 +576,14 @@ async function prepareAndPlaySelectedAudio() {
     const url = getAudioUrlForReciterSurah(reciter, surahNumber);
     if (!url) return;
 
+    try {
+        state.audio.pause();
+    } catch {}
+    state.audio.currentTime = 0;
     state.audio.src = url;
+    try {
+        state.audio.load();
+    } catch {}
     state.audioReady = true;
     state.audio.playbackRate = parseFloat(els.playbackRate.value) || 1;
     await state.audio.play().catch(() => {});
@@ -711,6 +610,7 @@ function setupAudioInteractions() {
         const pct = parseFloat(els.audioProgress.value) || 0;
         state.audio.currentTime = (pct / 100) * state.audio.duration;
         if (els.reciterModalProgress) els.reciterModalProgress.value = pct;
+        syncAllPlayerUIs();
     });
 }
 
