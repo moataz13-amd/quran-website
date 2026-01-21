@@ -17,6 +17,23 @@ const state = {
 
 const els = {};
 
+function isReaderFullscreen() {
+    return document.body.classList.contains("reader-fullscreen");
+}
+
+function enterReaderFullscreen({ pushHistory = true } = {}) {
+    if (isReaderFullscreen()) return;
+    document.body.classList.add("reader-fullscreen");
+    if (pushHistory) {
+        window.history.pushState({ readerFullscreen: true }, "", window.location.href);
+    }
+}
+
+function exitReaderFullscreen() {
+    if (!isReaderFullscreen()) return;
+    document.body.classList.remove("reader-fullscreen");
+}
+
 function qs(id) {
     return document.getElementById(id);
 }
@@ -59,6 +76,11 @@ function initRefs() {
     els.reciterModalProgress = qs("reciter-modal-progress");
     els.reciterModalTime = qs("reciter-modal-time");
     els.reciterModalRate = qs("reciter-modal-rate");
+
+    els.imageModal = qs("image-modal");
+    els.imageModalClose = qs("image-modal-close");
+    els.imageModalImg = qs("image-modal-img");
+    els.readerExitFullscreen = qs("reader-exit-fullscreen");
 }
 
 const featuredReciterIds = [54, 102, 4, 123, 51, 5, 106, 112, 62, 35, 92, 93];
@@ -118,6 +140,16 @@ async function fetchJSON(url) {
     return res.json();
 }
 
+function stripBasmalaPrefix(text) {
+    if (!text) return text;
+
+    const basmalaPrefixRe =
+        /^\s*ب[\u064B-\u065F\u0670\u0640]*س[\u064B-\u065F\u0670\u0640]*م[\u064B-\u065F\u0670\u0640]*\s+[اٱ]ل[\u064B-\u065F\u0670\u0640]*ل[\u064B-\u065F\u0670\u0640]*ه[\u064B-\u065F\u0670\u0640]*\s+[اٱ]ل[\u064B-\u065F\u0670\u0640]*ر[\u064B-\u065F\u0670\u0640]*ح[\u064B-\u065F\u0670\u0640]*م[\u064B-\u065F\u0670\u0640]*ن[\u064B-\u065F\u0670\u0640]*\s+[اٱ]ل[\u064B-\u065F\u0670\u0640]*ر[\u064B-\u065F\u0670\u0640]*ح[\u064B-\u065F\u0670\u0640]*ي[\u064B-\u065F\u0670\u0640]*م[\u064B-\u065F\u0670\u0640]*\s*/u;
+
+    const stripped = String(text).replace(basmalaPrefixRe, "");
+    return stripped === text ? text : stripped.trim();
+}
+
 async function loadSurahs() {
     // Al Quran Cloud: list of surahs
     const data = await fetchJSON("https://api.alquran.cloud/v1/surah");
@@ -129,6 +161,7 @@ function renderSurahList() {
     state.surahs.forEach((s, idx) => {
         const li = document.createElement("li");
         li.className = "surah-item";
+
         li.tabIndex = 0;
         li.dataset.index = idx;
 
@@ -140,11 +173,11 @@ function renderSurahList() {
       </div>
     `;
 
-        li.addEventListener("click", () => selectSurah(idx));
+        li.addEventListener("click", () => selectSurah(idx, { openFullscreen: true }));
         li.addEventListener("keydown", (e) => {
             if (e.key === "Enter" || e.key === " ") {
                 e.preventDefault();
-                selectSurah(idx);
+                selectSurah(idx, { openFullscreen: true });
             }
         });
 
@@ -184,15 +217,34 @@ async function loadSurahText(index) {
     els.quranText.innerHTML = "";
     els.ayahSelect.innerHTML = "";
 
-    arabicAyahs.forEach((ayah, i) => {
+    if (surah.number !== 9) {
+        const basmala = document.createElement("div");
+        basmala.className = "basmala";
+        basmala.textContent = "بِسْمِ ٱللَّٰهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ";
+        els.quranText.appendChild(basmala);
+    }
+
+    let startAyahIndex = 0;
+    if (surah.number !== 9 && arabicAyahs[0] && arabicAyahs[0].text) {
+        const firstStripped = stripBasmalaPrefix(arabicAyahs[0].text);
+        if (firstStripped !== arabicAyahs[0].text && !firstStripped) {
+            startAyahIndex = 1;
+        }
+    }
+
+    for (let i = startAyahIndex; i < arabicAyahs.length; i++) {
+        const displayIndex = i - startAyahIndex;
+        const displayNumber = displayIndex + 1;
+        const ayah = arabicAyahs[i];
         const cont = document.createElement("span");
         cont.className = "ayah";
-        cont.id = `ayah-${ayah.numberInSurah}`;
+        cont.id = `ayah-${displayNumber}`;
 
-        const numberSpan = `<span class="ayah-number">﴿${ayah.numberInSurah}﴾</span>`;
+        const numberSpan = `<span class="ayah-number">﴿${displayNumber}﴾</span>`;
         const transText = (transAyahs[i] && transAyahs[i].text) || "";
 
-        cont.innerHTML = `${ayah.text} ${numberSpan}`;
+        const ayahText = displayIndex === 0 ? stripBasmalaPrefix(ayah.text) : ayah.text;
+        cont.innerHTML = `${ayahText} ${numberSpan}`;
 
         if (state.showTranslation) {
             const t = document.createElement("span");
@@ -201,35 +253,44 @@ async function loadSurahText(index) {
             cont.appendChild(t);
         }
 
-        cont.addEventListener("click", () => highlightAyah(i));
+        cont.addEventListener("click", () => highlightAyah(displayIndex, false));
 
         els.quranText.appendChild(cont);
         els.quranText.appendChild(document.createTextNode(" "));
 
         const o = document.createElement("option");
-        o.value = i;
-        o.textContent = `آية ${i + 1}`;
+        o.value = displayIndex;
+        o.textContent = `آية ${displayNumber}`;
         els.ayahSelect.appendChild(o);
-    });
+    }
 
-    els.surahSelect.value = index;
+    if (els.surahSelect) {
+        els.surahSelect.value = index;
+    }
+
     els.audioSurahSelect.value = index;
     highlightAyah(0, false);
 }
 
-function highlightAyah(idx, smooth = true) {
+function highlightAyah(idx, scroll = false) {
     state.currentAyahIndex = idx;
     document.querySelectorAll(".ayah").forEach((el) => el.classList.remove("ayah-active"));
     const target = els.quranText.querySelectorAll(".ayah")[idx];
     if (!target) return;
     target.classList.add("ayah-active");
-    if (smooth) {
-        target.scrollIntoView({ behavior: "smooth", block: "center" });
+    if (scroll) {
+        target.scrollIntoView({ behavior: "auto", block: "center" });
     }
 }
 
-function selectSurah(idx) {
+function selectSurah(idx, { openFullscreen = false } = {}) {
+    document.body.classList.remove("mobile-index-open");
     loadSurahText(idx).catch(console.error);
+    if (openFullscreen) {
+        enterReaderFullscreen();
+        const el = document.getElementById("quran-reader-section");
+        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
 }
 
 function setupQuranInteractions() {
@@ -249,12 +310,12 @@ function setupQuranInteractions() {
 
     els.goToAyah.addEventListener("click", () => {
         const idx = parseInt(els.ayahSelect.value, 10) || 0;
-        highlightAyah(idx);
+        highlightAyah(idx, true);
     });
 
     els.surahSelect.addEventListener("change", () => {
         const idx = parseInt(els.surahSelect.value, 10) || 0;
-        selectSurah(idx);
+        selectSurah(idx, { openFullscreen: false });
     });
 }
 
@@ -670,12 +731,140 @@ function setupThemeToggle() {
 }
 
 function setupNav() {
+    const isMobile = () => !!(window.matchMedia && window.matchMedia("(max-width: 960px)").matches);
+
     document.querySelectorAll(".nav-link").forEach((btn) => {
         btn.addEventListener("click", () => {
             const targetId = btn.dataset.target;
+            if (targetId === "surah-index-section" && isMobile()) {
+                document.body.classList.toggle("mobile-index-open");
+                const open = document.body.classList.contains("mobile-index-open");
+                btn.setAttribute("aria-expanded", open ? "true" : "false");
+                if (open) {
+                    const el = document.getElementById(targetId);
+                    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+                }
+                return;
+            }
+
+            if (isMobile()) {
+                document.body.classList.remove("mobile-index-open");
+                const indexBtn = document.querySelector('.nav-link[data-target="surah-index-section"]');
+                if (indexBtn) indexBtn.setAttribute("aria-expanded", "false");
+            }
+
             const el = document.getElementById(targetId);
             if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
         });
+    });
+}
+
+function setupReaderFullscreen() {
+    if (els.readerExitFullscreen) {
+        els.readerExitFullscreen.addEventListener("click", () => {
+            if (window.history.length > 1 && window.history.state && window.history.state.readerFullscreen) {
+                window.history.back();
+            } else {
+                exitReaderFullscreen();
+            }
+        });
+    }
+
+    window.addEventListener("popstate", () => {
+        if (window.history.state && window.history.state.readerFullscreen) {
+            enterReaderFullscreen({ pushHistory: false });
+        } else {
+            exitReaderFullscreen();
+        }
+    });
+}
+
+function parseImageHash() {
+    const h = window.location.hash || "";
+    if (!h.startsWith("#image=")) return null;
+    const encoded = h.slice("#image=".length);
+    if (!encoded) return null;
+    try {
+        return decodeURIComponent(encoded);
+    } catch {
+        return null;
+    }
+}
+
+function openImageModal(src, { updateHash = true } = {}) {
+    if (!els.imageModal || !els.imageModalImg) return;
+    if (!src) return;
+
+    els.imageModalImg.src = src;
+
+    if (typeof els.imageModal.showModal === "function") {
+        if (!els.imageModal.open) els.imageModal.showModal();
+    } else {
+        els.imageModal.setAttribute("open", "");
+    }
+
+    if (updateHash) {
+        const encoded = encodeURIComponent(src);
+        window.location.hash = `image=${encoded}`;
+    }
+}
+
+function closeImageModal({ updateHash = true } = {}) {
+    if (!els.imageModal || !els.imageModalImg) return;
+
+    if (typeof els.imageModal.close === "function") {
+        if (els.imageModal.open) els.imageModal.close();
+    } else {
+        els.imageModal.removeAttribute("open");
+    }
+
+    els.imageModalImg.removeAttribute("src");
+
+    if (updateHash && (window.location.hash || "").startsWith("#image=")) {
+        if (window.history.length > 1) {
+            window.history.back();
+        } else {
+            window.location.hash = "";
+        }
+    }
+}
+
+function setupImageViewer() {
+    if (!els.imageModal) return;
+
+    if (els.imageModalClose) {
+        els.imageModalClose.addEventListener("click", () => closeImageModal());
+    }
+
+    els.imageModal.addEventListener("click", (e) => {
+        if (e.target === els.imageModal) closeImageModal();
+    });
+
+    els.imageModal.addEventListener("close", () => {
+        closeImageModal({ updateHash: false });
+    });
+
+    window.addEventListener("hashchange", () => {
+        const src = parseImageHash();
+        if (src) {
+            openImageModal(src, { updateHash: false });
+        } else {
+            closeImageModal({ updateHash: false });
+        }
+    });
+
+    const initial = parseImageHash();
+    if (initial) openImageModal(initial, { updateHash: false });
+
+    document.addEventListener("click", (e) => {
+        const el = e.target && e.target.closest && e.target.closest("[data-fullscreen-src],[data-mushaf-image]");
+        if (!el) return;
+
+        const src = el.dataset.fullscreenSrc || el.dataset.mushafImage || (el.tagName === "IMG" ? el.getAttribute("src") : null);
+        if (!src) return;
+
+        e.preventDefault();
+        openImageModal(src);
     });
 }
 
@@ -684,10 +873,13 @@ async function bootstrap() {
     setupNav();
     setupThemeToggle();
     setupReciterModal();
+    setupImageViewer();
+    setupReaderFullscreen();
 
     try {
         await loadSurahs();
         renderSurahList();
+
         renderSurahDropdowns();
         setupQuranInteractions();
         await loadSurahText(0);

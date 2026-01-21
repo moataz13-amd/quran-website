@@ -20,6 +20,7 @@
                 </div>
             </div>
             <nav class="main-nav" aria-label="Main navigation">
+                <button class="nav-link" data-target="surah-index-section">الفهرس</button>
                 <button class="nav-link" data-target="quran-reader-section">المصحف</button>
                 <button class="nav-link" data-target="quran-audio-section">الاستماع</button>
                 <button class="nav-link" data-target="reciters-section">القراء</button>
@@ -30,7 +31,7 @@
         </header>
 
         <main class="main-layout">
-            <aside class="side-panel" aria-label="Surah selection">
+            <aside id="surah-index-section" class="side-panel" aria-label="Surah selection">
                 <div class="panel-header">الفهرس</div>
                 <input id="surah-search" class="search-input" type="search" placeholder="ابحث عن سورة" aria-label="Search Surah" />
                 <ul id="surah-list" class="surah-list" tabindex="0" aria-label="Surah list"></ul>
@@ -50,6 +51,7 @@
                 <span class="slider" aria-hidden="true"></span>
                 <span class="switch-label">عرض الترجمة (EN)</span>
               </label>
+                            <button id="reader-exit-fullscreen" class="secondary-button" type="button">رجوع</button>
                         </div>
                     </header>
 
@@ -172,6 +174,13 @@
             </div>
 
             <div id="reciter-modal-surahs" class="reciter-modal-surahs" aria-live="polite"></div>
+        </div>
+    </dialog>
+
+    <dialog id="image-modal" class="image-modal" aria-label="Image viewer">
+        <div class="image-modal-inner">
+            <button id="image-modal-close" class="icon-button image-modal-close" aria-label="Close image viewer">✕</button>
+            <img id="image-modal-img" class="image-modal-img" alt="" />
         </div>
     </dialog>
 

@@ -258,7 +258,6 @@ body.light-theme .search-input:focus {
     border: 1px solid rgba(255, 255, 255, 0.03);
     max-height: 540px;
     overflow: auto;
-    scrollbar-width: thin;
 }
 
 body.light-theme .surah-list {
@@ -536,7 +535,6 @@ body.light-theme .ayah-toolbar select {
     border: 1px solid rgba(255, 255, 255, 0.06);
     max-height: 420px;
     overflow-y: auto;
-    scrollbar-width: thin;
 }
 
 body.light-theme .quran-scroll {
@@ -558,6 +556,14 @@ body.light-theme .quran-scroll {
     font-size: 24px;
     line-height: 2.3;
     text-align: justify;
+}
+
+.basmala {
+    text-align: center;
+    font-size: 26px;
+    line-height: 2;
+    margin: 4px 0 10px;
+    color: var(--accent-strong);
 }
 
 .ayah {
@@ -645,8 +651,8 @@ body.light-theme .audio-controls-panel select {
 }
 
 #audio-progress[type="range"] {
-    appearance: none;
     -webkit-appearance: none;
+    appearance: none;
     height: 4px;
     border-radius: 999px;
     background: rgba(255, 255, 255, 0.15);
@@ -760,6 +766,7 @@ body.light-theme .reciter-card {
     height: 24px;
     border-radius: 999px;
     background-image: linear-gradient(135deg, rgba(200, 169, 106, 0.4) 0, rgba(200, 169, 106, 0.1) 30%, transparent 60%), repeating-linear-gradient(45deg, rgba(0, 0, 0, 0.45) 0 6px, rgba(0, 0, 0, 0.8) 6px 12px);
+    -webkit-mask-image: radial-gradient(circle at 50% 0, black 0 70%, transparent 72%);
     mask-image: radial-gradient(circle at 50% 0, black 0 70%, transparent 72%);
     opacity: 0.7;
 }
@@ -780,6 +787,7 @@ body.light-theme .reciter-modal {
 
 .reciter-modal::backdrop {
     background: rgba(0, 0, 0, 0.65);
+    -webkit-backdrop-filter: blur(6px);
     backdrop-filter: blur(6px);
 }
 
@@ -855,8 +863,8 @@ body.light-theme .reciter-modal-player {
 }
 
 #reciter-modal-progress[type="range"] {
-    appearance: none;
     -webkit-appearance: none;
+    appearance: none;
     height: 4px;
     border-radius: 999px;
     background: rgba(255, 255, 255, 0.15);
@@ -896,7 +904,6 @@ body.light-theme .reciter-modal-rate {
     gap: 8px;
     max-height: min(60vh, 520px);
     overflow: auto;
-    scrollbar-width: thin;
 }
 
 .reciter-modal-surahs::-webkit-scrollbar {
@@ -970,13 +977,108 @@ body.light-theme .reciters-toggle {
     color: var(--text);
 }
 
+.image-modal {
+    width: min(1200px, calc(100% - 16px));
+    height: calc(100% - 16px);
+    border: 1px solid rgba(200, 169, 106, 0.28);
+    border-radius: 20px;
+    padding: 0;
+    background: rgba(0, 0, 0, 0.85);
+    box-shadow: 0 30px 90px rgba(0, 0, 0, 0.85);
+}
+
+body.light-theme .image-modal {
+    border-color: rgba(15, 79, 68, 0.18);
+    background: rgba(255, 255, 255, 0.92);
+    box-shadow: 0 26px 70px rgba(15, 56, 46, 0.18);
+}
+
+.image-modal::backdrop {
+    background: rgba(0, 0, 0, 0.8);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+}
+
+body.light-theme .image-modal::backdrop {
+    background: rgba(15, 56, 46, 0.22);
+}
+
+.image-modal-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.image-modal-close {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 2;
+}
+
+.image-modal-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: 12px;
+    background: rgba(0, 0, 0, 0.25);
+}
+
+body.light-theme .image-modal-img {
+    background: rgba(15, 56, 46, 0.04);
+}
+
+#reader-exit-fullscreen {
+    display: none;
+}
+
+body.reader-fullscreen #reader-exit-fullscreen {
+    display: inline-flex;
+}
+
+body.reader-fullscreen .top-header {
+    display: none;
+}
+
+body.reader-fullscreen .side-panel {
+    display: none;
+}
+
+body.reader-fullscreen .main-layout {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+body.reader-fullscreen #quran-audio-section,
+body.reader-fullscreen #reciters-section,
+body.reader-fullscreen .site-footer {
+    display: none;
+}
+
+body.reader-fullscreen .content-area {
+    gap: 0;
+}
+
+body.reader-fullscreen .app {
+    margin: 0;
+    min-height: 100vh;
+    border-radius: 0;
+}
+
+body.reader-fullscreen .quran-scroll {
+    max-height: calc(100vh - 240px);
+}
+
 @media (max-width: 960px) {
     .app {
         margin: 10px;
         padding: 14px 14px 10px;
     }
     .top-header {
-        flex-wrap: nowrap;
+        flex-wrap: wrap;
         border-radius: 22px;
         align-items: center;
         gap: 10px;
@@ -986,10 +1088,10 @@ body.light-theme .reciters-toggle {
         margin-inline-start: 0;
         flex: 1;
         justify-content: center;
-        flex-wrap: nowrap;
-        gap: 6px;
-        overflow-x: auto;
-        overscroll-behavior-x: contain;
+        flex-wrap: wrap;
+        gap: 4px;
+        overflow-x: visible;
+        overflow: visible;
     }
     .main-nav::-webkit-scrollbar {
         height: 0;
@@ -998,7 +1100,18 @@ body.light-theme .reciters-toggle {
         grid-template-columns: minmax(0, 1fr);
     }
     .side-panel {
-        order: 2;
+        order: 0;
+        display: none;
+    }
+    body.mobile-index-open .side-panel {
+        display: flex;
+    }
+    body.reader-fullscreen .side-panel {
+        display: none;
+    }
+    .nav-link {
+        padding: 7px 12px;
+        font-size: 13px;
     }
 }
 
@@ -1013,10 +1126,6 @@ body.light-theme .reciters-toggle {
     .brand-subtitle {
         display: none;
     }
-    .nav-link {
-        padding: 7px 14px;
-        font-size: 13px;
-    }
     .app {
         margin: 0;
         min-height: 100vh;
@@ -1024,6 +1133,11 @@ body.light-theme .reciters-toggle {
     }
     .reciter-modal {
         width: calc(100% - 18px);
+    }
+    .image-modal {
+        width: calc(100% - 12px);
+        height: calc(100% - 12px);
+        border-radius: 16px;
     }
     .reciter-modal-player-controls {
         flex-wrap: wrap;
