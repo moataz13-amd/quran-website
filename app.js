@@ -458,6 +458,7 @@ function setupRecitersInteractions() {
 
 function getAudioUrlForReciterSurah(reciter, surahNumber) {
     const moshaf = reciter && reciter.moshaf && reciter.moshaf[0];
+    if (!moshaf || !moshaf.server) return null;
     const padded = surahNumber.toString().padStart(3, "0");
     return `${moshaf.server}${padded}.mp3`;
 }
@@ -475,15 +476,20 @@ async function playSurahForReciter(reciter, surahIndex) {
 
     try {
         state.audio.pause();
-    } catch {}
+    } catch (e) {}
     state.audio.currentTime = 0;
     state.audio.src = "";
-    state.audio.load();
+    try {
+        state.audio.load();
+    } catch (e) {}
     state.audio.src = url;
+    try {
+        state.audio.load();
+    } catch (e) {}
     state.audioReady = true;
     const rate = (els.reciterModalRate && parseFloat(els.reciterModalRate.value)) || parseFloat(els.playbackRate.value) || 1;
     state.audio.playbackRate = rate;
-    await state.audio.play().catch(() => {});
+    await state.audio.play().catch((e) => {});
     syncAllPlayerUIs();
 
     els.downloadAudio.href = url;
@@ -491,6 +497,147 @@ async function playSurahForReciter(reciter, surahIndex) {
 
     if (els.reciterModalNowPlaying) {
         els.reciterModalNowPlaying.textContent = `${reciter.name} • ${surah.number}. ${surah.name}`;
+    }
+}
+
+function renderReciterModalSurahs(reciter) {
+    if (!els.reciterModalSurahs) return;
+    els.reciterModalSurahs.innerHTML = "";
+    if (!Array.isArray(state.surahs) || !state.surahs.length) return;
+
+    state.surahs.forEach((s, idx) => {
+        const row = document.createElement("div");
+        row.className = "modal-surah-row";
+        row.dataset.query = `${s.name} ${s.englishName}`.toLowerCase();
+
+        const title = document.createElement("div");
+        title.className = "modal-surah-title";
+        title.innerHTML = `
+      <div class="modal-surah-name">${s.number}. ${s.name}</div>
+      <div class="modal-surah-sub">${s.englishName} • ${s.numberOfAyahs} آية</div>
+    `;
+
+        const actions = document.createElement("div");
+        actions.className = "modal-surah-actions";
+
+        const playBtn = document.createElement("button");
+        playBtn.className = "primary-button";
+        playBtn.textContent = "تشغيل";
+        playBtn.addEventListener("click", () => {
+            playSurahForReciter(reciter, idx).catch((e) => console.error(e));
+        });
+
+        const downloadLink = document.createElement("a");
+        downloadLink.className = "secondary-button";
+        downloadLink.textContent = "تحميل";
+        const url = getAudioUrlForReciterSurah(reciter, s.number);
+        downloadLink.href = url || "#";
+        downloadLink.download = `surah-${s.number}-${reciter && reciter.name ? reciter.name : "reciter"}.mp3`;
+        downloadLink.setAttribute("role", "button");
+
+        actions.appendChild(playBtn);
+        actions.appendChild(downloadLink);
+
+        row.appendChild(title);
+        row.appendChild(actions);
+
+        els.reciterModalSurahs.appendChild(row);
+    });
+}
+
+function openReciterModal(reciter) {
+    if (!els.reciterModal) return;
+    if (!reciter) return;
+
+    if (els.reciterModalName) {
+        els.reciterModalName.textContent = reciter.name || "";
+    }
+
+    const moshafName = (reciter.moshaf && reciter.moshaf[0] && reciter.moshaf[0].name) || "";
+    const rewaya = reciter.rewaya || "";
+    if (els.reciterModalMeta) {
+        els.reciterModalMeta.textContent = `${rewaya}${rewaya && moshafName ? " • " : ""}${moshafName}`.trim();
+    }
+
+    if (els.reciterModalSurahSearch) {
+        els.reciterModalSurahSearch.value = "";
+    }
+
+    renderReciterModalSurahs(reciter);
+
+    if (els.reciterModalNowPlaying) {
+        els.reciterModalNowPlaying.textContent = reciter.name || "";
+    }
+
+    if (typeof els.reciterModal.showModal === "function") {
+        els.reciterModal.showModal();
+    } else {
+        els.reciterModal.setAttribute("open", "");
+    }
+
+    if (els.reciterModalSurahSearch) {
+        els.reciterModalSurahSearch.focus();
+    }
+    syncAllPlayerUIs();
+}
+
+function closeReciterModal() {
+    if (!els.reciterModal) return;
+    if (typeof els.reciterModal.close === "function") {
+        els.reciterModal.close();
+    } else {
+        els.reciterModal.removeAttribute("open");
+    }
+}
+
+function setupReciterModal() {
+    if (!els.reciterModal) return;
+
+    if (els.reciterModalClose) {
+        els.reciterModalClose.addEventListener("click", closeReciterModal);
+    }
+
+    els.reciterModal.addEventListener("click", (e) => {
+        if (e.target === els.reciterModal) closeReciterModal();
+    });
+
+    if (els.reciterModalSurahSearch && els.reciterModalSurahs) {
+        els.reciterModalSurahSearch.addEventListener("input", () => {
+            const q = els.reciterModalSurahSearch.value.trim().toLowerCase();
+            Array.from(els.reciterModalSurahs.children).forEach((row) => {
+                const match = (row.dataset.query || "").includes(q);
+                row.style.display = match ? "flex" : "none";
+            });
+        });
+    }
+
+    if (els.reciterModalPlayPause) {
+        els.reciterModalPlayPause.addEventListener("click", () => {
+            if (!state.audioReady) return;
+            if (state.audio.paused) {
+                state.audio.play();
+            } else {
+                state.audio.pause();
+            }
+            syncAllPlayerUIs();
+        });
+    }
+
+    if (els.reciterModalProgress) {
+        els.reciterModalProgress.addEventListener("input", () => {
+            if (!state.audio.duration) return;
+            const pct = parseFloat(els.reciterModalProgress.value) || 0;
+            state.audio.currentTime = (pct / 100) * state.audio.duration;
+            syncAllPlayerUIs();
+        });
+    }
+
+    if (els.reciterModalRate) {
+        els.reciterModalRate.addEventListener("change", () => {
+            const rate = parseFloat(els.reciterModalRate.value) || 1;
+            state.audio.playbackRate = rate;
+            if (els.playbackRate) els.playbackRate.value = String(rate);
+        });
     }
 }
 
@@ -519,7 +666,7 @@ function setupAudioPlayer() {
 
     els.audioPlayPause.addEventListener("click", () => {
         if (!state.audioReady) {
-            prepareAndPlaySelectedAudio().catch(console.error);
+            prepareAndPlaySelectedAudio().catch((e) => console.error(e));
             return;
         }
         if (audio.paused) {
@@ -570,6 +717,7 @@ function formatTime(sec) {
 async function prepareAndPlaySelectedAudio() {
     const reciter = state.currentReciter;
     if (!reciter) return;
+
     const surahIndex = parseInt(els.audioSurahSelect.value, 10) || 0;
     const surahNumber = state.surahs[surahIndex].number;
 
@@ -578,15 +726,15 @@ async function prepareAndPlaySelectedAudio() {
 
     try {
         state.audio.pause();
-    } catch {}
+    } catch (e) {}
     state.audio.currentTime = 0;
     state.audio.src = url;
     try {
         state.audio.load();
-    } catch {}
+    } catch (e) {}
     state.audioReady = true;
     state.audio.playbackRate = parseFloat(els.playbackRate.value) || 1;
-    await state.audio.play().catch(() => {});
+    await state.audio.play().catch((e) => {});
     syncAllPlayerUIs();
 
     els.downloadAudio.href = url;
@@ -597,7 +745,7 @@ function setupAudioInteractions() {
     setupAudioPlayer();
 
     els.playAudioBtn.addEventListener("click", () => {
-        prepareAndPlaySelectedAudio().catch(console.error);
+        prepareAndPlaySelectedAudio().catch((e) => console.error(e));
     });
 
     els.playbackRate.addEventListener("change", () => {
@@ -686,7 +834,7 @@ function parseImageHash() {
     if (!encoded) return null;
     try {
         return decodeURIComponent(encoded);
-    } catch {
+    } catch (e) {
         return null;
     }
 }
@@ -785,6 +933,12 @@ async function bootstrap() {
         await loadSurahText(0);
     } catch (e) {
         console.error("Failed to load surahs", e);
+        if (els.surahList) {
+            els.surahList.innerHTML = '<li class="surah-item" style="justify-content:center; opacity:.85;">تعذر تحميل الفهرس</li>';
+        }
+        if (els.quranText) {
+            els.quranText.innerHTML = '<div style="text-align:center; opacity:.85;">تعذر تحميل بيانات المصحف</div>';
+        }
     }
 
     try {
@@ -794,6 +948,9 @@ async function bootstrap() {
         setupRecitersInteractions();
     } catch (e) {
         console.error("Failed to load reciters", e);
+        if (els.recitersGrid) {
+            els.recitersGrid.innerHTML = '<div style="grid-column:1 / -1; text-align:center; opacity:.85;">تعذر تحميل القراء</div>';
+        }
     }
 
     setupAudioInteractions();
