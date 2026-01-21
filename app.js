@@ -13,6 +13,8 @@ const state = {
     audioReady: false,
     recitersMobileExpanded: false,
     recitersMobileExpandedBySearch: false,
+    repeatSurah: false,
+    autoNextSurah: false,
 };
 
 const els = {};
@@ -58,6 +60,10 @@ function initRefs() {
     els.audioProgress = qs("audio-progress");
     els.audioTime = qs("audio-time");
     els.playbackRate = qs("playback-rate");
+    els.repeatSurah = qs("repeat-surah");
+    els.autoNextSurah = qs("auto-next-surah");
+    els.repeatSurahModal = qs("repeat-surah-modal");
+    els.autoNextSurahModal = qs("auto-next-surah-modal");
 
     els.reciterSearch = qs("reciter-search");
     els.recitersGrid = qs("reciters-grid");
@@ -81,6 +87,42 @@ function initRefs() {
     els.imageModalClose = qs("image-modal-close");
     els.imageModalImg = qs("image-modal-img");
     els.readerExitFullscreen = qs("reader-exit-fullscreen");
+}
+
+function loadAudioPlaybackOptions() {
+    state.repeatSurah = localStorage.getItem("quran-repeat-surah") === "1";
+    state.autoNextSurah = localStorage.getItem("quran-auto-next-surah") === "1";
+
+    if (state.repeatSurah && state.autoNextSurah) {
+        state.autoNextSurah = false;
+        localStorage.setItem("quran-auto-next-surah", "0");
+    }
+
+    syncAudioPlaybackOptionsUI();
+}
+
+function saveAudioPlaybackOptions() {
+    localStorage.setItem("quran-repeat-surah", state.repeatSurah ? "1" : "0");
+    localStorage.setItem("quran-auto-next-surah", state.autoNextSurah ? "1" : "0");
+}
+
+function syncAudioPlaybackOptionsUI() {
+    if (els.repeatSurah) els.repeatSurah.checked = !!state.repeatSurah;
+    if (els.autoNextSurah) els.autoNextSurah.checked = !!state.autoNextSurah;
+    if (els.repeatSurahModal) els.repeatSurahModal.checked = !!state.repeatSurah;
+    if (els.autoNextSurahModal) els.autoNextSurahModal.checked = !!state.autoNextSurah;
+}
+
+function setPlaybackOptions({ repeatSurah, autoNextSurah }) {
+    state.repeatSurah = !!repeatSurah;
+    state.autoNextSurah = !!autoNextSurah;
+
+    if (state.repeatSurah && state.autoNextSurah) {
+        state.autoNextSurah = false;
+    }
+
+    syncAudioPlaybackOptionsUI();
+    saveAudioPlaybackOptions();
 }
 
 const featuredReciterIds = [54, 102, 4, 123, 51, 5, 106, 112, 62, 35, 92, 93];
@@ -661,6 +703,24 @@ function setupAudioPlayer() {
     });
 
     audio.addEventListener("ended", () => {
+        const repeat = !!state.repeatSurah;
+        const autoNext = !!state.autoNextSurah;
+
+        if (repeat) {
+            audio.currentTime = 0;
+            audio.play().catch((e) => {});
+            syncAllPlayerUIs();
+            return;
+        }
+
+        if (autoNext && els.audioSurahSelect && Array.isArray(state.surahs) && state.surahs.length) {
+            const currentIndex = parseInt(els.audioSurahSelect.value, 10) || 0;
+            const nextIndex = (currentIndex + 1) % state.surahs.length;
+            els.audioSurahSelect.value = String(nextIndex);
+            prepareAndPlaySelectedAudio().catch((e) => console.error(e));
+            return;
+        }
+
         syncAllPlayerUIs();
     });
 
@@ -743,6 +803,33 @@ async function prepareAndPlaySelectedAudio() {
 
 function setupAudioInteractions() {
     setupAudioPlayer();
+
+    loadAudioPlaybackOptions();
+    syncAudioPlaybackOptionsUI();
+
+    if (els.repeatSurah) {
+        els.repeatSurah.addEventListener("change", () => {
+            setPlaybackOptions({ repeatSurah: !!els.repeatSurah.checked, autoNextSurah: false });
+        });
+    }
+
+    if (els.autoNextSurah) {
+        els.autoNextSurah.addEventListener("change", () => {
+            setPlaybackOptions({ repeatSurah: false, autoNextSurah: !!els.autoNextSurah.checked });
+        });
+    }
+
+    if (els.repeatSurahModal) {
+        els.repeatSurahModal.addEventListener("change", () => {
+            setPlaybackOptions({ repeatSurah: !!els.repeatSurahModal.checked, autoNextSurah: false });
+        });
+    }
+
+    if (els.autoNextSurahModal) {
+        els.autoNextSurahModal.addEventListener("change", () => {
+            setPlaybackOptions({ repeatSurah: false, autoNextSurah: !!els.autoNextSurahModal.checked });
+        });
+    }
 
     els.playAudioBtn.addEventListener("click", () => {
         prepareAndPlaySelectedAudio().catch((e) => console.error(e));

@@ -708,6 +708,60 @@ body.light-theme .playback-speed select {
     color: var(--text);
 }
 
+.audio-options-row {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+}
+
+.audio-option {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.audio-option input[type="checkbox"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.audio-option-label {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    color: var(--text-soft);
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    transition: background var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+body.light-theme .audio-option-label {
+    background: rgba(15, 79, 68, 0.06);
+    border-color: rgba(15, 79, 68, 0.14);
+}
+
+.audio-option input[type="checkbox"]:focus-visible+.audio-option-label {
+    outline: 2px solid rgba(200, 169, 106, 0.75);
+    outline-offset: 2px;
+}
+
+.audio-option input[type="checkbox"]:checked+.audio-option-label {
+    color: var(--text);
+    border-color: rgba(200, 169, 106, 0.7);
+    background: rgba(200, 169, 106, 0.12);
+    box-shadow: 0 0 0 4px rgba(200, 169, 106, 0.18);
+}
+
 .reciters-grid {
     position: relative;
     z-index: 1;
