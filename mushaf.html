@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en" dir="rtl">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>المصحف</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="icon" href="Asset 3.png" type="image/png" />
+    <link rel="apple-touch-icon" href="Asset 3.png" />
+</head>
+
+<body class="mushaf-mode">
+    <div id="app" class="app">
+        <header class="top-header">
+            <div class="brand">
+                <div class="brand-mark">
+                    <img class="brand-logo" src="Asset 3.png" alt="Quran Oasis Logo" />
+                </div>
+                <div>
+                    <div class="brand-title">واحة القرآن</div>
+                    <div class="brand-subtitle">المصحف</div>
+                </div>
+            </div>
+            <div class="header-actions">
+                <a class="secondary-button" href="index.html">رجوع</a>
+                <button id="toggle-theme" class="icon-button" aria-label="Toggle night mode">🌙</button>
+            </div>
+        </header>
+
+        <main class="main-layout">
+            <section class="content-area">
+                <section id="quran-reader-section" class="card quran-reader" aria-label="Quran reader">
+                    <header class="card-header">
+                        <div>
+                            <h1 class="card-title">المصحف</h1>
+                            <p class="card-subtitle">اختر سورة واقرأ بتنسيق صفحات</p>
+                        </div>
+                        <div class="control-row">
+                            <label>
+                                سورة
+                                <select id="surah-select"></select>
+                            </label>
+                            <label>
+                                آية
+                                <select id="ayah-select"></select>
+                            </label>
+                            <button id="go-to-ayah" class="primary-button" type="button">اذهب</button>
+                        </div>
+                    </header>
+
+                    <div id="quran-scroll-container" class="quran-scroll" tabindex="0">
+                        <div id="quran-text" class="quran-text" aria-live="polite"></div>
+                    </div>
+
+                    <div hidden>
+                        <input type="checkbox" id="toggle-translation" />
+                    </div>
+                </section>
+            </section>
+        </main>
+
+        <footer class="site-footer">
+            <p> نسأل الله القبول.</p>
+        </footer>
+    </div>
+
+    <script src="mushaf.js"></script>
+</body>
+
+</html>

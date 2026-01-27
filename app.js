@@ -50,6 +50,7 @@ function initRefs() {
     els.quranScroll = qs("quran-scroll-container");
     els.toggleTranslation = qs("toggle-translation");
     els.goToAyah = qs("go-to-ayah");
+    els.goToMushaf = qs("go-to-mushaf");
     els.themeToggle = qs("toggle-theme");
 
     els.reciterSelect = qs("reciter-select");
@@ -358,6 +359,14 @@ function setupQuranInteractions() {
         highlightAyah(idx, true);
     });
 
+    if (els.goToMushaf) {
+        els.goToMushaf.addEventListener("click", () => {
+            const idx = parseInt(els.surahSelect.value, 10);
+            const surahIndex = Number.isFinite(idx) ? idx : state.currentSurahIndex || 0;
+            window.location.href = `mushaf.html?surah=${surahIndex}`;
+        });
+    }
+
     els.surahSelect.addEventListener("change", () => {
         const idx = parseInt(els.surahSelect.value, 10) || 0;
         selectSurah(idx, { openFullscreen: false });
@@ -621,8 +630,15 @@ function openReciterModal(reciter) {
         els.reciterModal.setAttribute("open", "");
     }
 
-    if (els.reciterModalSurahSearch) {
-        els.reciterModalSurahSearch.focus();
+    const isMobile = !!(window.matchMedia && window.matchMedia("(max-width: 720px)").matches);
+    if (isMobile) {
+        if (els.reciterModalClose && typeof els.reciterModalClose.focus === "function") {
+            els.reciterModalClose.focus({ preventScroll: true });
+        }
+    } else {
+        if (els.reciterModalSurahSearch) {
+            els.reciterModalSurahSearch.focus();
+        }
     }
     syncAllPlayerUIs();
 }

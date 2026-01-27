@@ -44,6 +44,12 @@ body {
     padding: 0;
 }
 
+html.mushaf-mode,
+html.mushaf-mode body {
+    height: auto;
+    overflow: auto;
+}
+
 body {
     font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     background: var(--page-bg);
@@ -52,6 +58,11 @@ body {
     display: flex;
     justify-content: center;
     align-items: stretch;
+}
+
+body.mushaf-mode {
+    height: auto;
+    overflow: auto;
 }
 
 .app {
@@ -66,6 +77,25 @@ body {
     display: flex;
     flex-direction: column;
     gap: 16px;
+}
+
+body.mushaf-mode .app {
+    margin: 0;
+    min-height: 100vh;
+    border-radius: 0;
+}
+
+body.mushaf-mode .main-layout {
+    flex: 1;
+    min-height: 0;
+}
+
+body.mushaf-mode .content-area {
+    min-height: 0;
+}
+
+body.mushaf-mode .site-footer {
+    display: flex;
 }
 
 body.light-theme .app {
@@ -194,11 +224,21 @@ body.light-theme .icon-button:hover {
     align-items: flex-start;
 }
 
+body.mushaf-mode .main-layout {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+body.mushaf-mode .content-area {
+    width: 100%;
+    max-width: 980px;
+    margin-inline: auto;
+}
+
 .side-panel {
     background: radial-gradient(circle at 0 0, rgba(200, 169, 106, 0.08), transparent 55%), linear-gradient(145deg, rgba(3, 23, 19, 0.95), rgba(2, 14, 11, 0.98));
     border-radius: 24px;
     padding: 14px 12px 12px;
-    border: 1px solid rgba(200, 169, 106, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.04);
     box-shadow: var(--shadow-soft);
     display: flex;
     flex-direction: column;
@@ -526,18 +566,99 @@ body.light-theme .ayah-toolbar {
 
 .ayah-toolbar select {
     margin-inline-start: 2px;
+    -webkit-appearance: none;
+    appearance: none;
     border-radius: 999px;
     border: 1px solid rgba(255, 255, 255, 0.18);
-    padding: 4px 8px;
+    padding: 4px 10px;
+    padding-inline-start: 30px;
     font-size: 11px;
-    background: rgba(0, 0, 0, 0.7);
+    background-color: rgba(0, 0, 0, 0.7);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24'%3E%3Cpath fill='%23c8a96a' d='M7 10l5 5l5-5z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: left 10px center;
     color: var(--text);
 }
 
 body.light-theme .ayah-toolbar select {
-    background: rgba(255, 255, 255, 0.95);
+    background-color: rgba(255, 255, 255, 0.95);
     border-color: rgba(15, 79, 68, 0.18);
     color: var(--text);
+}
+
+.ayah-toolbar select:hover {
+    border-color: rgba(200, 169, 106, 0.45);
+}
+
+.ayah-toolbar select:focus-visible {
+    outline: 2px solid rgba(200, 169, 106, 0.75);
+    outline-offset: 2px;
+}
+
+body.mushaf-mode #quran-reader-section .control-row label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+body.mushaf-mode #quran-reader-section .control-row select {
+    -webkit-appearance: none;
+    appearance: none;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    padding: 6px 10px;
+    padding-inline-start: 32px;
+    font-size: 12px;
+    height: 36px;
+    background-color: rgba(0, 0, 0, 0.7);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24'%3E%3Cpath fill='%23c8a96a' d='M7 10l5 5l5-5z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: left 10px center;
+    color: var(--text);
+}
+
+body.mushaf-mode #quran-reader-section .control-row select:hover {
+    border-color: rgba(200, 169, 106, 0.45);
+}
+
+body.mushaf-mode #quran-reader-section .control-row select:focus-visible {
+    outline: 2px solid rgba(200, 169, 106, 0.75);
+    outline-offset: 2px;
+}
+
+body.light-theme.mushaf-mode #quran-reader-section .control-row select {
+    background-color: rgba(255, 255, 255, 0.95);
+    border-color: rgba(15, 79, 68, 0.18);
+    color: var(--text);
+}
+
+@media (max-width: 720px) {
+    .ayah-toolbar {
+        padding: 10px;
+        border-radius: 18px;
+    }
+    .toolbar-group {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-items: end;
+        gap: 8px;
+    }
+    .ayah-toolbar label {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        font-size: 10px;
+    }
+    .ayah-toolbar select {
+        width: 100%;
+        margin-inline-start: 0;
+        height: 36px;
+        padding: 6px 10px;
+        padding-inline-start: 32px;
+        font-size: 12px;
+        border-radius: 14px;
+        background-position: left 10px center;
+    }
 }
 
 .quran-scroll {
@@ -549,6 +670,31 @@ body.light-theme .ayah-toolbar select {
     border: 1px solid rgba(255, 255, 255, 0.06);
     max-height: 420px;
     overflow-y: auto;
+}
+
+body.mushaf-mode .quran-scroll {
+    max-height: none;
+    height: calc(100vh - 240px);
+    overflow-y: auto;
+}
+
+body.mushaf-mode .quran-scroll::-webkit-scrollbar {
+    width: 8px;
+}
+
+body.mushaf-mode .quran-scroll::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.18);
+    border-radius: 999px;
+}
+
+body.mushaf-mode .quran-scroll::-webkit-scrollbar-thumb {
+    background: rgba(200, 169, 106, 0.55);
+    border-radius: 999px;
+    border: 2px solid rgba(0, 0, 0, 0.18);
+}
+
+body.mushaf-mode .quran-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgba(200, 169, 106, 0.75);
 }
 
 body.light-theme .quran-scroll {
@@ -570,6 +716,14 @@ body.light-theme .quran-scroll {
     font-size: 24px;
     line-height: 2.3;
     text-align: justify;
+}
+
+body.mushaf-mode .quran-text {
+    font-family: "KFGQPC Uthmanic Script", "Amiri Quran", "Scheherazade New", "Amiri", system-ui;
+    font-size: 28px;
+    line-height: 2.25;
+    text-align: right;
+    word-spacing: normal;
 }
 
 .basmala {
@@ -600,6 +754,31 @@ body.light-theme .quran-scroll {
     font-size: 13px;
     margin-inline: 4px;
     color: var(--accent-strong);
+}
+
+body.mushaf-mode .quran-text .ayah {
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+body.mushaf-mode .quran-text .ayah:hover {
+    background: transparent;
+}
+
+body.mushaf-mode .quran-text .ayah-active {
+    background: transparent;
+    box-shadow: none;
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.22em;
+}
+
+body.mushaf-mode .quran-text .ayah-number {
+    font-size: 0.6em;
+    margin-inline: 0.25em;
+    opacity: 0.95;
 }
 
 .translation {
@@ -829,11 +1008,6 @@ body.light-theme .reciter-card {
     font-size: 13px;
 }
 
-.reciter-bio {
-    font-size: 11px;
-    color: var(--text-soft);
-}
-
 .site-footer {
     margin-top: 4px;
     padding-top: 10px;
@@ -843,6 +1017,14 @@ body.light-theme .reciter-card {
     display: flex;
     flex-direction: column;
     gap: 4px;
+}
+
+.bottom-nav {
+    display: none;
+}
+
+body.reader-fullscreen .bottom-nav {
+    display: none;
 }
 
 .footer-pattern {
@@ -1162,6 +1344,148 @@ body.reader-fullscreen .quran-scroll {
     max-height: calc(100vh - 240px);
 }
 
+.bottom-nav {
+    display: none;
+}
+
+body.reader-fullscreen .bottom-nav {
+    display: none;
+}
+
+@media (max-width: 720px) {
+    .top-header {
+        flex-wrap: nowrap;
+    }
+    .main-nav {
+        display: none;
+    }
+    .header-actions {
+        margin-inline-start: auto;
+    }
+    .bottom-nav {
+        position: fixed;
+        left: 12px;
+        right: 12px;
+        bottom: 12px;
+        z-index: 50;
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 8px;
+        padding: 10px;
+        border-radius: 18px;
+        background: rgba(0, 0, 0, 0.62);
+        border: 1px solid rgba(200, 169, 106, 0.35);
+        -webkit-backdrop-filter: blur(8px);
+        backdrop-filter: blur(8px);
+    }
+    body.light-theme .bottom-nav {
+        background: rgba(255, 255, 255, 0.92);
+        border-color: rgba(15, 79, 68, 0.18);
+    }
+    .bottom-nav-link {
+        width: 100%;
+        justify-content: center;
+        padding: 10px 8px;
+        font-size: 12px;
+        border-radius: 999px;
+    }
+    .ayah-toolbar {
+        padding: 10px;
+        border-radius: 18px;
+    }
+    .toolbar-group {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-items: end;
+        gap: 8px;
+    }
+    .ayah-toolbar label {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        font-size: 10px;
+    }
+    .ayah-toolbar select {
+        width: 100%;
+        margin-inline-start: 0;
+        height: 36px;
+        padding: 6px 10px;
+        padding-inline-start: 32px;
+        font-size: 12px;
+        border-radius: 14px;
+        background-position: left 10px center;
+    }
+    #go-to-ayah,
+    #go-to-mushaf {
+        grid-column: 1 / -1;
+        width: 100%;
+        height: 36px;
+        border-radius: 14px;
+        padding: 0 14px;
+        justify-content: center;
+        white-space: nowrap;
+    }
+    .reciters-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .reciter-card {
+        padding: 8px;
+        border-radius: 16px;
+        gap: 4px;
+    }
+    .reciter-avatar {
+        width: 32px;
+        height: 32px;
+    }
+    .reciter-name {
+        font-size: 13px;
+    }
+    .reciter-bio {
+        font-size: 10px;
+    }
+    body {
+        padding-bottom: 96px;
+    }
+    body.reader-fullscreen {
+        padding-bottom: 0;
+    }
+    .audio-controls-panel {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .card-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .control-row {
+        width: 100%;
+    }
+    .brand-subtitle {
+        display: none;
+    }
+    .app {
+        margin: 0;
+        min-height: 100vh;
+        border-radius: 0;
+    }
+    .reciter-modal {
+        width: calc(100% - 18px);
+    }
+    .image-modal {
+        width: calc(100% - 12px);
+        height: calc(100% - 12px);
+        border-radius: 16px;
+    }
+    .reciter-modal-player-controls {
+        flex-wrap: wrap;
+    }
+    .reciter-modal-rate {
+        width: 100%;
+    }
+    .reciters-more-row {
+        display: flex;
+    }
+}
+
 @media (max-width: 960px) {
     .app {
         margin: 10px;
@@ -1202,44 +1526,6 @@ body.reader-fullscreen .quran-scroll {
     .nav-link {
         padding: 7px 12px;
         font-size: 13px;
-    }
-}
-
-@media (max-width: 720px) {
-    .audio-controls-panel {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-    .card-header {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    .control-row {
-        width: 100%;
-    }
-    .brand-subtitle {
-        display: none;
-    }
-    .app {
-        margin: 0;
-        min-height: 100vh;
-        border-radius: 0;
-    }
-    .reciter-modal {
-        width: calc(100% - 18px);
-    }
-    .image-modal {
-        width: calc(100% - 12px);
-        height: calc(100% - 12px);
-        border-radius: 16px;
-    }
-    .reciter-modal-player-controls {
-        flex-wrap: wrap;
-    }
-    .reciter-modal-rate {
-        width: 100%;
-    }
-    .reciters-more-row {
-        display: flex;
     }
 }
 
